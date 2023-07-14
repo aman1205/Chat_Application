@@ -1,0 +1,246 @@
+@mixin mobile{
+    @media screen and (max-width:480px) {
+        //content 
+    }
+}
+@mixin tablet{
+    @media screen and (max-width:768px) {
+        //content 
+    }
+}
+@mixin laptop{
+    @media screen and (max-width:1200px) {
+        //content 
+    }
+}
+
+.home{
+    background-color:#E4A5FF;
+    height:100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    .container-home{
+        border: 1px solid black;
+        border-radius:10px;
+        width: 100%;
+        height: 80%;
+        display: flex;
+        overflow: hidden;
+
+        .sidebar{
+            flex: 1;
+            border-right: 1px solid black;
+            background-color: #116D6E;
+
+            .navbar{
+                display: flex;
+                align-items: center;
+                background-color: #00DFA2;
+                height: 50px;
+                padding: 10px;
+                justify-content: space-between;
+                color:#fff ;
+
+                .logo{
+                    font-weight: bold;
+                    color: black;
+                }
+
+                .user{
+                    display: flex;
+                    gap: 10px;
+
+                    img{
+                        background-color: antiquewhite;
+                        height: 24px;
+                        width: 24px;
+                        border-radius: 50%;
+                        object-fit: cover;
+                    }
+
+                    .logout{
+                        background-color: #DB005B;
+                        color: black;
+                        font-size: 15px;
+                        border: none;
+                        cursor: pointer;
+                        border-radius: 10%;
+
+                    }
+                }
+
+                
+            }
+            .search , .chats{
+                border-bottom:1px solid gray ;
+
+                .searchform{
+                    padding: 10px;
+                    input{
+                        background-color: transparent;
+                        border: none;
+                        color: white;
+                        outline: none;
+                    }
+                }
+
+                .userchat{
+                    padding: 10px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    color: white;
+                    cursor: pointer;
+
+                    &:hover{
+                        opacity: 60%;
+                    }
+                    img{
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 50%;
+                        object-fit: cover;
+                    }
+
+                    .userchatInfo{
+                        
+                        span{
+                            font-size: 18px;
+                            font-weight: 500;
+                        }
+
+                        p{
+                            font-size: 14px;
+                            color: cadetblue;
+                        }
+                    }
+                }
+            }
+        }
+
+        .chat{
+            flex: 2;
+
+            .chatInfo{
+                height: 50px;
+                background-color: #116D6E;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px;
+                color: lightgreen;
+            }
+
+            .chatIcon{
+                display: flex;
+                gap: 10px;
+
+                img{
+                    height: 24px;
+                    cursor: pointer;
+                }
+            }
+
+            .messages{
+                background-color:#A6D0DD;
+                padding: 10px;
+                height: calc(100% - 100px);
+                overflow:scroll;
+                overflow-x: hidden;
+                scroll-behavior: smooth;
+
+                .message{
+                    display: flex;
+                    gap: 10px;
+                    margin-bottom: 20px;
+
+                    .messageInfo{
+                        display: flex;
+                        flex-direction: column;
+                        color: gray;
+                        font-weight: 300;
+                        img{
+                            width:40px;
+                            height: 40px;
+                            object-fit: cover;
+                        }
+                    }
+
+                    .messageContent{
+                        max-width:80% ;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+
+                        p{
+                           background-color: #fff;
+                           padding: 10px 20px ; 
+                           border-radius:0px  10px 10px 10px;
+                           max-width: max-content;
+                        }
+                        img{
+                            width: 50%;
+                        }
+                    }
+
+                    &.owner{
+                        flex-direction: row-reverse ;
+
+                        .messageContent{
+                            align-items: flex-end;
+
+                            p{
+                                background-color: #0079FF;
+                                color: #fff;
+                                border-radius: 10px 0 10px 10px ;
+                            }
+                        }
+
+                      
+                    }
+                }
+            }
+
+            .input{
+                height: 50px;
+                background-color: #fff;
+                padding: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+
+
+                input{
+                    width: 100%;
+                    border: none;
+                    outline: none;
+                    color: black;
+                    font-size: 18px;
+
+                }
+
+                .send{
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+
+                    .ri-attachment-line{
+                        height: 24px;
+                        cursor: pointer;
+
+                    }
+
+                    button{
+                        border: none;
+                        padding: 10px 15px;
+                        color:white;
+                        background-color: #0079FF;
+                        border-radius: 10px;
+                    }
+                }
+            }
+        }
+    }
+}
