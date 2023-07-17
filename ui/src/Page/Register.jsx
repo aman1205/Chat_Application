@@ -1,9 +1,7 @@
 import React, { useContext } from 'react';
 import { useState } from 'react';
 import axios from 'axios';
-import { Link, Navigate } from 'react-router-dom';
 import { UserContext } from '../UserContext';
-import LoginForm from './Login';
 const RegistrationForm = () => {
 
   const [name, setName] = useState('');

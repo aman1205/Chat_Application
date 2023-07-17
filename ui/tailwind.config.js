@@ -9,7 +9,8 @@ module.exports = {
         blue: '#78C1F3',
         mint: '#9BE8D8',
         sage: '#9E2F6CA',
-        yellow: '#F8FDCF'
+        yell: '#F8FDCF',
+        side:'#111827'
       }
     },
   },

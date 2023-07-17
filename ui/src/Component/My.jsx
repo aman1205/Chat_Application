@@ -3,6 +3,8 @@ import axios from "axios";
 import Avatar from "./Avatar";
 import { UserContext } from "../UserContext";
 import { uniqBy } from "lodash";
+import Navbar from "./Navbar";
+import ChatNav from "./ChatNav";
 
 const Aman = () => {
   const [ws, setWs] = useState(null);
@@ -114,27 +116,27 @@ const Aman = () => {
   const messageWithoutDuo = uniqBy(messages, "_id");
   const onlinePeopleExclOurUser = { ...onlinePeople };
   delete onlinePeopleExclOurUser[id];
-  //Send file Function 
-  const sendFile=(ev)=>{
-    const file=ev.target.files[0];
-    ws.send(JSON.stringify({
-
-    }))
-  }
-
-
+  //Send file Function
+  const sendFile = (ev) => {
+    const file = ev.target.files[0];
+    ws.send(JSON.stringify({}));
+  };
 
   return (
     <div className="flex h-screen">
-      <div className="bg-blue w-1/3 flex flex-col">
-        <div className="flex-grow">
+      <div className="bg-side  w-1/3 flex flex-col ">
+        <Navbar />  
+        <div className="flex-grow w-100 bg-white shadow-2xl mt-3 mr-3 ml-3 rounded-md">
+          <h1 className="self-center text-2xl font-semibold whitespace-nowrap dark:text-black">
+            Chats
+          </h1>
           {Object.keys(onlinePeopleExclOurUser).map((userId) => (
             <div
               key={userId}
               onClick={() => setSelectedUserId(userId)}
               className={
-                "border-b border-gray-100 py-2 pl-4 flex items-center gap-2 cursor-pointer " +
-                (userId === selectedUserId ? "bg-pink-50" : "")
+                "border-b border-white-500 py-2 pl-4 flex items-center gap-2 cursor-pointer mt-2 " +
+                (userId === selectedUserId ? "bg-side text-white shadow-lg" : "")
               }
             >
               <Avatar
@@ -151,7 +153,7 @@ const Aman = () => {
               onClick={() => setSelectedUserId(userId)}
               className={
                 "border-b border-gray-100 py-2 pl-4 flex items-center gap-2 cursor-pointer " +
-                (userId === selectedUserId ? "bg-pink-50" : "")
+                (userId === selectedUserId ? "bg-pink-100" : "")
               }
             >
               <Avatar
@@ -164,7 +166,7 @@ const Aman = () => {
           ))}
         </div>
         <div className="p-2 text-center flex items-center justify-between">
-          <span className=" text-sm text-grat-600 flex items-center">
+          <span className=" text-sm text-grat-600 flex items-center text-white">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -188,7 +190,8 @@ const Aman = () => {
         </div>
       </div>
 
-      <div className="flex flex-col bg-mint w-2/3 p-2">
+      <div className="flex flex-col bg-side w-2/3 p-4 border-l border-white-400">
+        <ChatNav  name={username}/>
         <div className="flex-grow">
           {!selectedUserId && (
             <div className="  flex h-full flex-grow items-center justify-center ">
@@ -202,18 +205,18 @@ const Aman = () => {
 
           {!!selectedUserId && (
             <div className="relative h-full">
-              <div className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
+              <div className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-2 hide-scrollbar">
                 {messageWithoutDuo.map((item) => (
                   <div
                     key={item._id}
-                    className={item.sender === id ? "text-right" : "text-left"}
+                    className={item.sender === id ? "text-right " : "text-left"}
                   >
                     <div
                       className={
-                        "text-left inline-block p-2 my-2 rounded-md text-sm " +
+                        "text-left inline-block p-2 my-2   max-w-xs w-auto text-sm " +
                         (item.sender === id
-                          ? "bg-red-500 text-white"
-                          : "bg-orange-500 text-gray-500")
+                          ? "bg-gradient-to-br from-yellow-400 to-red-500 text-white rounded-r-xl rounded-t-xl "
+                          : "bg-gradient-to-br from-blue to-cyan-500 text-white rounded-l-xl rounded-tr-xl max-w-xs w-auto")
                       }
                     >
                       {item.sender === id ? "Me:" : ""} {item.text}
@@ -235,8 +238,8 @@ const Aman = () => {
               value={newMessageText}
               onChange={(e) => setNewMessageText(e.target.value)}
             />
-            <label  className="bg-gray-400 p-2 text-gray-00 rounded-md border border-yellow cursor-pointer">
-              <input className="hidden" type="file" onChange={sendFile}/>
+            <label className="bg-gray-400 p-2 text-gray-00 rounded-md border border-yellow cursor-pointer">
+              <input className="hidden" type="file" onChange={sendFile} />
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
