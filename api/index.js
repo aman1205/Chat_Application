@@ -11,7 +11,7 @@ const MessageModel = require('./model/Message')
 const app = express()
 app.use(cors({
     credentials: true,
-    origin: 'http://localhost:3000'
+    origin: 'http://localhost:8000'
 }))
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -33,7 +33,9 @@ app.use('/api', User)
 //     console.log(`Node is connected ${port}`)
 // })
 
-const server = app.listen(port);
+const server = app.listen(port ,()=>{
+    console.log(`Listening at PORT ${port}`)
+});
 
 //WebSocket server 
 const wss = new ws.WebSocketServer({ server });

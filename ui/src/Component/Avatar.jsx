@@ -1,5 +1,5 @@
 export default function Avatar({userId,username,online}) {
-  console.log(username.name)
+    console.log(username)
     const colors = ['bg-teal-200', 'bg-red-200',
                     'bg-green-200', 'bg-purple-200',
                     'bg-blue-200', 'bg-yellow-200',

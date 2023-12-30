@@ -16,6 +16,10 @@ const UserSchema= new mongoose.Schema({
         required:true,
     
     },
+    profilePhoto: {
+        type:String
+    }
+
 })
 
 module.exports=mongoose.model("User", UserSchema)

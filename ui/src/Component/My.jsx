@@ -5,7 +5,6 @@ import { UserContext } from "../UserContext";
 import { uniqBy } from "lodash";
 import Navbar from "./Navbar";
 import ChatNav from "./ChatNav";
-
 const Aman = () => {
   const [ws, setWs] = useState(null);
   const [onlinePeople, setOnlinePeople] = useState({});
@@ -15,12 +14,14 @@ const Aman = () => {
   const [newMessageText, setNewMessageText] = useState("");
   const [messages, setMessages] = useState([]);
   const divUnderMessages = useRef();
+  const [selectUser , setSelectedUser] =useState(null)
 
   //Connect with WebSocket
   useEffect(() => {
     connectToWs();
   }, [selectedUserId]);
 
+  
   ///Connect to wss again
   function connectToWs() {
     const ws = new WebSocket("ws://localhost:5000");
@@ -33,7 +34,7 @@ const Aman = () => {
       }, 1000);
     });
   }
-
+  
   // filter unique User
   function showOnlinePeople(peopleArray) {
     const people = {};
@@ -88,6 +89,7 @@ const Aman = () => {
           setMessages(e.data);
         });
     }
+    
   }, [selectedUserId]);
 
   /// All user or Online User
@@ -122,21 +124,62 @@ const Aman = () => {
     ws.send(JSON.stringify({}));
   };
 
+  const findSelectedUser=(id)=>{
+    if (onlinePeople[id]) {
+      setSelectedUser(onlinePeople[id]);
+    }
+    if (offlinePeople[id]){
+      const name =offlinePeople[id].name
+      setSelectedUser(name);
+    } 
+  }
+  useEffect(() => {
+    if (selectedUserId) {
+      findSelectedUser(selectedUserId);
+      console.log("SelectedUser Name is ", selectUser);
+    }
+  }, [selectedUserId]);
+
   return (
     <div className="flex h-screen">
-      <div className="bg-side  w-1/3 flex flex-col ">
-        <Navbar />  
-        <div className="flex-grow w-100 bg-white shadow-2xl mt-3 mr-3 ml-3 rounded-md">
-          <h1 className="self-center text-2xl font-semibold whitespace-nowrap dark:text-black">
-            Chats
-          </h1>
+      <div className="bg-[#F5F6FA]  w-1/3 flex flex-col justify-center items-center gap-2">
+        <Navbar />
+        <div className="flex-grow w-5/6  bg-white shadow-2xl rounded-2xl text-center flex flex-col items-center mt-4 mb-6">
+          <div className="w-4/5 bg-[#F5F6FA]  shadow-2xl  flex justify-center items-center mt-2  rounded-2xl">
+            <div className="relative w-full">
+              <div className="absolute inset-y-0  flex items-center pl-3 pointer-events-none">
+                <svg
+                  className="w-4 h-4 text-gray-500 dark:text-gray-400"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+                  />
+                </svg>
+                <span className="sr-only">Search icon</span>
+              </div>
+              <input
+                type="text"
+                id="search-navbar"
+                className="block w-full p-3 pl-10 text-sm text-gray-900 border  rounded-xl bg-[#F5F6FA] focus:ring-blue-500 focus:border-black dark:bg-[#F5F6FA] dark:placeholder-gray-400 dark:text-black"
+                placeholder="Search..."
+              />
+            </div>
+          </div>
           {Object.keys(onlinePeopleExclOurUser).map((userId) => (
             <div
               key={userId}
               onClick={() => setSelectedUserId(userId)}
               className={
-                "border-b border-white-500 py-2 pl-4 flex items-center gap-2 cursor-pointer mt-2 " +
-                (userId === selectedUserId ? "bg-side text-white shadow-lg" : "")
+                "w-4/5 py-2 pl-4 flex items-center gap-2 cursor-pointer m-1 rounded-2xl "+
+                (userId === selectedUserId ? "scale-x-40 shadow-2xl bg-yellow-50" : "")
               }
             >
               <Avatar
@@ -152,12 +195,12 @@ const Aman = () => {
               key={userId}
               onClick={() => setSelectedUserId(userId)}
               className={
-                "border-b border-gray-100 py-2 pl-4 flex items-center gap-2 cursor-pointer " +
-                (userId === selectedUserId ? "bg-pink-100" : "")
+                "w-4/5 py-2 pl-4 flex items-center gap-2 m-1 cursor-pointer mt-2 rounded-2xl"+
+                (userId === selectedUserId ? "scale-x-40 shadow-2xl bg-yellow-50" : "")
               }
             >
               <Avatar
-                username={offlinePeople[userId]}
+                username={offlinePeople[userId].name}
                 userId={userId}
                 online={false}
               />
@@ -165,38 +208,17 @@ const Aman = () => {
             </div>
           ))}
         </div>
-        <div className="p-2 text-center flex items-center justify-between">
-          <span className=" text-sm text-grat-600 flex items-center text-white">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-4 h-4"
-            >
-              <path
-                fillRule="evenodd"
-                d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <b>{username}</b>
-          </span>
-          <button
-            onClick={logout}
-            className="text-white bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2"
-          >
-            Logout
-          </button>
-        </div>
       </div>
 
-      <div className="flex flex-col bg-side w-2/3 p-4 border-l border-white-400">
-        <ChatNav  name={username}/>
+      <div className="flex flex-col bg-[#F5F6FA] w-2/3 p-4 border-l border-red-300">
+        {
+          selectedUserId && (<ChatNav name={selectUser } />)
+        }
         <div className="flex-grow">
           {!selectedUserId && (
             <div className="  flex h-full flex-grow items-center justify-center ">
-              <div className="text-gray-400">
-                &larr;Chat With Your Friends
+              <div className="text-black">
+                Chat With Your Friends
                 <br />
                 Send and Recive Meassge to other with encrpytion
               </div>
@@ -213,13 +235,13 @@ const Aman = () => {
                   >
                     <div
                       className={
-                        "text-left inline-block p-2 my-2   max-w-xs w-auto text-sm " +
+                        "text-left inline-block p-4 my-2  max-w-xs w-auto text-sm shadow-xl	" +
                         (item.sender === id
-                          ? "bg-gradient-to-br from-yellow-400 to-red-500 text-white rounded-r-xl rounded-t-xl "
-                          : "bg-gradient-to-br from-blue to-cyan-500 text-white rounded-l-xl rounded-tr-xl max-w-xs w-auto")
+                          ? "bg-[#2680EB] text-white  rounded-xl mr-16 shadow-xl	"
+                          : "bg-white text-black rounded-xl  max-w-xs w-auto ml-16")
                       }
                     >
-                      {item.sender === id ? "Me:" : ""} {item.text}
+                      {item.text}
                     </div>
                   </div>
                 ))}
@@ -230,45 +252,114 @@ const Aman = () => {
         </div>
 
         {!!selectedUserId && (
-          <form className="flex gap-2 " onSubmit={sendMessage}>
-            <input
-              type="text"
-              className="bg-white border rounded-sm p-2 flex-grow"
-              placeholder="Type Here"
-              value={newMessageText}
-              onChange={(e) => setNewMessageText(e.target.value)}
-            />
-            <label className="bg-gray-400 p-2 text-gray-00 rounded-md border border-yellow cursor-pointer">
-              <input className="hidden" type="file" onChange={sendFile} />
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-6 h-6"
+          <form
+            className="flex gap-2 justify-center items-center"
+            onSubmit={sendMessage}
+          >
+            <div class="relative w-5/6 ">
+              <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                <svg
+                  className="w-4 h-4 text-black dark:black"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+                  />
+                </svg>
+              </div>
+              <input
+                type="search"
+                id="search"
+                placeholder="Type a message"
+                value={newMessageText}
+                onChange={(e) => setNewMessageText(e.target.value)}
+                className="block w-full p-4 ps-10 text-sm  border border-gray-300 bg-black focus:ring-blue-500 focus:border-blue-500 dark:bg-white dark:border-white dark:placeholder-black dark:text-black dark:focus:ring-blue-500 dark:focus:border-blue-500 shadow-2xl rounded-2xl"
+                required
+              />
+              <button
+                type="submit"
+                className="p-2 text-white rounded-sm absolute inset-y-0 end-0 flex items-center ps-3 "
               >
-                <path
-                  fillRule="evenodd"
-                  d="M18.97 3.659a2.25 2.25 0 00-3.182 0l-10.94 10.94a3.75 3.75 0 105.304 5.303l7.693-7.693a.75.75 0 011.06 1.06l-7.693 7.693a5.25 5.25 0 11-7.424-7.424l10.939-10.94a3.75 3.75 0 115.303 5.304L9.097 18.835l-.008.008-.007.007-.002.002-.003.002A2.25 2.25 0 015.91 15.66l7.81-7.81a.75.75 0 011.061 1.06l-7.81 7.81a.75.75 0 001.054 1.068L18.97 6.84a2.25 2.25 0 000-3.182z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </label>
-            <button type="submit" className="bg-blue p-2 text-white rounded-sm">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
-                />
-              </svg>
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlnsXlink="http://www.w3.org/1999/xlink"
+                  version="1.1"
+                  className="w-8 h-8"
+                  viewBox="0 0 256 256"
+                  xmlSpace="preserve"
+                >
+                  <g
+                    style={{
+                      stroke: "none",
+                      strokeWidth: 0,
+                      strokeDasharray: "none",
+                      strokeLinecap: "butt",
+                      strokeLinejoin: "miter",
+                      strokeMiterlimit: 10,
+                      fill: "rgb(38,128,235)",
+                      fillRule: "nonzero",
+                      opacity: 1,
+                    }}
+                    transform="translate(0 -2.842170943040401e-14) scale(2.81 2.81)"
+                  >
+                    <circle
+                      cx="45"
+                      cy="45"
+                      r="45"
+                      style={{
+                        stroke: "none",
+                        strokeWidth: 1,
+                        strokeDasharray: "none",
+                        strokeLinecap: "butt",
+                        strokeLinejoin: "miter",
+                        strokeMiterlimit: 10,
+                        fill: "rgb(38,128,235)",
+                        fillRule: "nonzero",
+                        opacity: 1,
+                      }}
+                      transform="matrix(1 0 0 1 0 0)"
+                    />
+                  </g>
+                  <g
+                    style={{
+                      stroke: "none",
+                      strokeWidth: 0,
+                      strokeDasharray: "none",
+                      strokeLinecap: "butt",
+                      strokeLinejoin: "miter",
+                      strokeMiterlimit: 10,
+                      fill: "none",
+                      fillRule: "nonzero",
+                      opacity: 1,
+                    }}
+                    transform="translate(56.08543569106949 46.17984832069335) scale(1.82 1.82) matrix(1 0 0 -1 0 90)"
+                  >
+                    <polygon
+                      points="0,14.69 0,39.65 51,45 0,50.35 0,75.31 90,45"
+                      style={{
+                        stroke: "none",
+                        strokeWidth: 1,
+                        strokeDasharray: "none",
+                        strokeLinecap: "butt",
+                        strokeLinejoin: "miter",
+                        strokeMiterlimit: 10,
+                        fill: "rgb(255,255,255)",
+                        fillRule: "nonzero",
+                        opacity: 1,
+                      }}
+                      transform="matrix(1 0 0 1 0 0)"
+                    />
+                  </g>
+                </svg>
+              </button>
+            </div>
           </form>
         )}
       </div>

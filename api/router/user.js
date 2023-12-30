@@ -4,6 +4,8 @@ const User = require('../model/user')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const MessageModel = require('../model/Message')
+const multer = require('multer');
+const { redirect } = require('react-router-dom')
 
 
 
@@ -13,6 +15,18 @@ const jwtSecret = '035dc459d0232d13107f717bd0c64f22f6e7731180a27407fe892b7863e03
 const RefreshKey = 'f14fc2b66c49a6c35a481a675ba87c7a19ae415d38cec7c03c2ac0106a41ce9b35d6fdfdf3d3042f5072712d7814ebb28e66c57027df7c784ff395eeee34bd06';
 
 //Function
+//Multer
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+      cb(null, Date.now() + '-' + file.originalname);
+    },
+  });
+  const upload = multer({ storage: storage });
+
+
 async function getUserDataFromRequest(req) {
     return new Promise((resolve, reject) => {
       const token = req.cookies.token;
@@ -30,14 +44,15 @@ async function getUserDataFromRequest(req) {
 
 //Register Routes
 
-router.post('/register', async (req, res) => {
+router.post('/register', upload.single('profilePhoto'), async (req, res) => {
     try {
         const pass = String(req.body.password)
         const hashPassword = await bcrypt.hash(pass, 10);
         const newUser = new User({
             name: req.body.name,
             email: req.body.email,
-            password: hashPassword
+            password: hashPassword,
+            profilePhoto: req.file.filename,
         });
 
         const user = await newUser.save();
@@ -52,7 +67,7 @@ router.post('/register', async (req, res) => {
 
     } catch (error) {
         if (error) throw error;
-        res.status(500).json(error)
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
@@ -64,10 +79,11 @@ router.get('/profile', async (req, res) => {
         if (token) {
             jwt.verify(token, jwtSecret, {}, (err, userData) => {
                 if (err) throw err;
-                res.json(userData);
+                res.status(200).json(userData);
             });
         } else {
             res.status(401).json('Please Login /Register');
+            // redirect('/register')
         }
     } catch (error) {
         console.error(error);
