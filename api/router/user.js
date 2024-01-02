@@ -44,7 +44,7 @@ async function getUserDataFromRequest(req) {
 
 //Register Routes
 
-router.post('/register', upload.single('profilePhoto'), async (req, res) => {
+router.post('/register', async (req, res) => {
     try {
         const pass = String(req.body.password)
         const hashPassword = await bcrypt.hash(pass, 10);
@@ -52,7 +52,7 @@ router.post('/register', upload.single('profilePhoto'), async (req, res) => {
             name: req.body.name,
             email: req.body.email,
             password: hashPassword,
-            profilePhoto: req.file.filename,
+            profilePhoto: req.body.profilePhoto,
         });
 
         const user = await newUser.save();
@@ -77,13 +77,13 @@ router.get('/profile', async (req, res) => {
     try {
         const token = await req.cookies.token;
         if (token) {
-            jwt.verify(token, jwtSecret, {}, (err, userData) => {
-                if (err) throw err;
-                res.status(200).json(userData);
-            });
+           const check = jwt.verify(token, jwtSecret);
+
+           const findUser = await User.findById(check.userId).lean();
+           const { password, ...user } = findUser;
+           res.status(200).json(user);
         } else {
             res.status(401).json('Please Login /Register');
-            // redirect('/register')
         }
     } catch (error) {
         console.error(error);
@@ -94,7 +94,7 @@ router.get('/profile', async (req, res) => {
 
 router.get('/alluser', async (req, res) => {
     try {
-        const data = await User.find({}, { _id: 1, name: 1 });
+        const data = await User.find({}, { _id:1,name:1, profilePhoto:1});
 
         res.status(200).json(data)
     } catch (error) {

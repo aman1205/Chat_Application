@@ -7,13 +7,16 @@ const ws = require('ws')
 const jwt = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
 const MessageModel = require('./model/Message')
+const UserModel = require('./model/user')
 
 const app = express()
 app.use(cors({
     credentials: true,
-    origin: 'http://localhost:8000'
+    origin: 'http://localhost:3000'
 }))
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+
 app.use(cookieParser());
 
 const jwtSecret = '035dc459d0232d13107f717bd0c64f22f6e7731180a27407fe892b7863e037338184af393a5902735f8c7a4487786f44bfa1d86876686d5200d05ac906007f62';
@@ -46,11 +49,14 @@ wss.on('connection', (connection, req) => {
         if (tokenCookiesString) {
             const token = tokenCookiesString.split('=')[1];
             if (token) {
-                jwt.verify(token, jwtSecret, {}, (err, userdata) => {
+                jwt.verify(token, jwtSecret, {}, async(err, userdata) => {
                     if (err) throw err;
-                    const { userId, userName } = userdata;
+                    const { userId, userName} = userdata;
+                    const user = await UserModel.findById(userId);
                     connection.userId = userId;
                     connection.Username = userName;
+                    connection.profilePhoto =user.profilePhoto
+                    
                 })
             }
         }
@@ -78,8 +84,7 @@ wss.on('connection', (connection, req) => {
     [...wss.clients].forEach(clients => {
         clients.send(JSON.stringify({
             online: [...wss.clients].map(c => (
-                { userId: c.userId, Username: c.Username }))
+                { userId: c.userId, Username: c.Username , profilePhoto:c.profilePhoto}))
         }));
     });
-
 });
