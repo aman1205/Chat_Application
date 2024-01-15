@@ -8,14 +8,16 @@ const RegistrationForm = () => {
     name: '',
     email: '',
     password: '',
-    profilePhoto: null,
+    profilePhoto: '',
   });
   const {setUserName,setId} =useContext(UserContext);
 
 
-  const handleChange = (e) => {
+  const handleChange = async(e) => {
     if (e.target.name === 'profilePhoto') {
-      setFormData({ ...formData, profilePhoto: e.target.files[0] });
+      const files =e.target.files[0]
+      const conveted = await  convertToBase(files)
+      setFormData({ ...formData, profilePhoto: conveted });
     } else {
       setFormData({ ...formData, [e.target.name]: e.target.value });
     }
@@ -32,11 +34,7 @@ const RegistrationForm = () => {
   console.log("Form Data", formDataToSend);
 
   try {
-    const response = await axios.post('http://localhost:5000/api/register', formDataToSend, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await axios.post('http://localhost:5000/api/register', formData);
       alert('User registered successfully!');
       setUserName(formData.name);
       setId(response.id);
@@ -48,7 +46,7 @@ const RegistrationForm = () => {
     <div id='register' className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <div className="w-96 bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         <h2 className="text-2xl font-bold mb-8 text-center">Registration</h2>
-        <form onSubmit={handleSubmit} encType="multipart/form-data">
+        <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
               Name
@@ -121,3 +119,17 @@ const RegistrationForm = () => {
 };
 
 export default RegistrationForm;
+
+
+function convertToBase(file){
+  return new Promise((resolve , reject)=>{
+    const fileRead = new FileReader();
+    fileRead.readAsDataURL(file);
+    fileRead.onload=()=>{
+      resolve(fileRead.result)
+    };
+    fileRead.onerror=(err)=>{
+      reject(err)
+    }
+  })
+}
