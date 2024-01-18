@@ -27,8 +27,8 @@ export function UserContextProvider({ children }) {
     const fetchProfile = async () => {
       try {
         const response = await axios.get('http://localhost:5000/api/profile', { withCredentials: true });
-        setId(response.data.userId);
-        setUserName(response.data.userName);
+        setId(response.data._id);
+        setUserName(response.data.name);
       } catch (error) {
         console.error(error);
       }
