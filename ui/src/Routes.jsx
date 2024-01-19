@@ -2,8 +2,7 @@ import React, { useContext, useState } from 'react';
 import { UserContext } from './UserContext';
 import LoginForm from './Page/Login';
 import RegistrationForm from './Page/Register';
-import Aman from './Component/My';
-
+import Main from './Component/Main';
 const Routes = () => {
   const { username, id } = useContext(UserContext);
   const [showRegister, setShowRegister] = useState(false);
@@ -13,7 +12,7 @@ const Routes = () => {
   };
 
   if (username || id) {
-    return <Aman />;
+    return <Main />;
   }
 
   return (
