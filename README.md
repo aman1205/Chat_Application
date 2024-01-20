@@ -3,6 +3,9 @@
 ## Overview
 This project is a real-time chat website built using the MERN (MongoDB, Express.js, React, Node.js) stack and WebSocket for bidirectional communication.
 
+##Screenshot 
+   ![image](https://github.com/aman1205/Chat_Application/assets/113249368/bfc30d5d-7bc4-4598-893f-c519431bbe86)
+
 ## Features
 - Real-time chat with WebSocket
 - User authentication
@@ -36,5 +39,10 @@ This project is a real-time chat website built using the MERN (MongoDB, Express.
 1. Start the server: `cd server && npm start`
 2. Start the client: `cd client && npm start`
 3. Open your browser and navigate to `http://localhost:3000`
+   
+
+
+
+
 
 
