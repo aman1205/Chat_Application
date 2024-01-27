@@ -30,7 +30,9 @@ mongoose.connect('mongodb://127.0.0.1:27017/chat', {
 
 app.use('/api', User)
 
-
+app.get('/' , (req ,res)=>{
+    res.status(200).json({Welcome: "Hey developer"})
+})
 
 // const server = app.listen(port,()=>{
 //     console.log(`Node is connected ${port}`)
