@@ -25,7 +25,7 @@ This project is a real-time chat website built using the MERN (MongoDB, Express.
 ## Configuration
 1. Set up MongoDB:
    - Create a MongoDB Atlas account or install MongoDB locally.
-   - Configure your MongoDB connection string in `server/config/default.json`.
+   - Configure your MongoDB connection string in `api/index.js`.
 
 2. Set up environment variables:
    - Create a `.env` file in the `server` directory with the following variables:
