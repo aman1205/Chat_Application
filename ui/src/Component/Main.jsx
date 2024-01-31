@@ -7,21 +7,20 @@ import Navbar from "./Navbar";
 import ChatNav from "./ChatNav";
 const Main = () => {
   const [ws, setWs] = useState(null);
-  const [onlinePeople, setOnlinePeople] = useState([]);
+  const [onlinePeople, setOnlinePeople] = useState([" "]);
   const [offlinePeople, setOfflinePeople] = useState({});
   const [selectedUserId, setSelectedUserId] = useState(null);
   const { username, id, setId, setUserName } = useContext(UserContext);
   const [newMessageText, setNewMessageText] = useState("");
   const [messages, setMessages] = useState([]);
   const divUnderMessages = useRef();
-  const [selectUser , setSelectedUser] =useState(null)
+  const [selectUser, setSelectedUser] = useState(null);
 
   //Connect with WebSocket
   useEffect(() => {
     connectToWs();
   }, [selectedUserId]);
 
-  
   ///Connect to wss again
   function connectToWs() {
     const ws = new WebSocket("ws://localhost:5000");
@@ -34,26 +33,31 @@ const Main = () => {
       }, 1000);
     });
   }
-  
+
   // filter unique User
   function showOnlinePeople(peopleArray) {
     const people = [];
-    peopleArray.forEach(({ userId, Username , profilePhoto }) => {
-      if(userId){
+    peopleArray.forEach(({ userId, Username, profilePhoto }) => {
+      if (userId) {
         people[userId] = {
-          username :Username,
-          photo:profilePhoto
+          username: Username,
+          photo: profilePhoto,
+          id: userId,
         };
       }
     });
-    setOnlinePeople(people);
+    // console.log(people)
+    // const updateOnlinePeople = people.filter(
+    //   (userObject) => Object.keys(userObject)[0] !== id
+    // );
+    setOnlinePeople(updateOnlinePeople);
   }
   //Online User
   function handleMessage(e) {
     const messageData = JSON.parse(e.data);
     if ("online" in messageData) {
       showOnlinePeople(messageData.online);
-      console.log(" messageDataonline", messageData.online)
+      // console.log(" messageDataonline" , messageWithoutDuo)
     } else if ("text" in messageData) {
       setMessages((prev) => [...prev, { ...messageData }]);
     }
@@ -81,7 +85,7 @@ const Main = () => {
     ]);
   };
 
-  // Scroll nature 
+  //Controll Scroll nature
   useEffect(() => {
     const div = divUnderMessages.current;
     if (div) {
@@ -89,6 +93,7 @@ const Main = () => {
     }
   }, [messages]);
 
+  //Fetch all the message of selected user in the chat
   useEffect(() => {
     if (selectedUserId) {
       axios
@@ -97,7 +102,6 @@ const Main = () => {
           setMessages(e.data);
         });
     }
-    
   }, [selectedUserId]);
 
   /// All user or Online User
@@ -106,7 +110,7 @@ const Main = () => {
       const offlinePeopleArr = res.data
         .filter((p) => p._id !== id)
         .filter((p) => !Object.keys(onlinePeople).includes(p._id));
-        
+
       const offlinePeople = {};
       offlinePeopleArr.forEach((p) => {
         offlinePeople[p._id] = p;
@@ -125,9 +129,33 @@ const Main = () => {
   }
   /// Lodash
   const messageWithoutDuo = uniqBy(messages, "_id");
-  const onlinePeopleExclOurUser = { ...onlinePeople };
-  delete onlinePeopleExclOurUser[id];
+  const onlinePeopleExclOurUser = [...onlinePeople];
 
+  // useEffect(() => {
+  // ... (other useEffect code)
+
+  // // Log out user and update onlinePeople state
+  // const indexOfCurrentUser = onlinePeople.findIndex(user => Object.keys(user)[0] === id);
+  // if (indexOfCurrentUser !== -1) {
+  //   const updatedOnlinePeople = [...onlinePeople];
+  //   updatedOnlinePeople.splice(indexOfCurrentUser, 1);
+  //   setOnlinePeople(updatedOnlinePeople);  // Update state with the modified array
+  // } else {
+  //   console.warn("Current user not found in onlinePeople array.");
+  // }
+  const updateOnlinePeople = onlinePeople.filter(
+    (userObject) => Object.keys(userObject)[0] !== id
+  );
+
+  // setOnlinePeople(prevOnlinePeople => {
+  //   const updatedOnlinePeople = prevOnlinePeople.filter(user => Object.keys(user)[0] !== id);
+  //   return updatedOnlinePeople;
+  // });
+
+  // ... (other useEffect code)
+  // }, [id]);
+
+  // const onlinePeopleExclOurUser = onlinePeople.filter((_, index) => index !== id);
 
   //Send file Function
   const sendFile = (ev) => {
@@ -135,22 +163,21 @@ const Main = () => {
     ws.send(JSON.stringify({}));
   };
 
-  const findSelectedUser=(id)=>{
+  const findSelectedUser = (id) => {
     if (onlinePeople[id]) {
       setSelectedUser(onlinePeople[id]);
     }
-    if (offlinePeople[id]){
-      const name =offlinePeople[id].name
+    if (offlinePeople[id]) {
+      const name = offlinePeople[id].name;
       setSelectedUser(name);
-    } 
-  }
+    }
+  };
   useEffect(() => {
     if (selectedUserId) {
       findSelectedUser(selectedUserId);
     }
   }, [selectedUserId]);
 
-  console.log("Gettinf Details" , onlinePeople)
   return (
     <div className="flex h-screen">
       <div className="bg-[#F5F6FA]  w-1/3 flex flex-col justify-center items-center gap-2">
@@ -174,7 +201,7 @@ const Main = () => {
                     d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
                   />
                 </svg>
-                <span className="sr-only">Search icon</span>
+                {/* <span className="sr-only">Search icon</span> */}
               </div>
               <input
                 type="text"
@@ -184,7 +211,7 @@ const Main = () => {
               />
             </div>
           </div>
-          {Object.keys(onlinePeopleExclOurUser).map((userId) => (
+          {/* {Object.keys(onlinePeopleExclOurUser).map((userId) => (
             <div
               key={userId}
               onClick={() => setSelectedUserId(userId)}
@@ -201,14 +228,41 @@ const Main = () => {
               />
               <span>{onlinePeople[userId]}</span>
             </div>
-          ))}
+          ))} */}
+          {updateOnlinePeople.map((data) => {
+            const key = Object.keys(data)[0];
+            const user = data[key];
+            console.table(data);
+            return (
+              <div
+                key={key}
+                onClick={() => setSelectedUserId(user.id)}
+                className={
+                  "w-4/5 py-2 pl-4 flex items-center gap-2 cursor-pointer m-1 rounded-2xl " +
+                  (user.id === selectedUserId
+                    ? "scale-x-40 shadow-2xl bg-yellow-50"
+                    : "")
+                }
+              >
+                <Avatar
+                  username={user.username}
+                  userId={key}
+                  photo={user.photo}
+                  online={true}
+                />
+                <span>{user.username}</span>
+              </div>
+            );
+          })}
           {Object.keys(offlinePeople).map((userId) => (
             <div
               key={userId}
               onClick={() => setSelectedUserId(userId)}
               className={
-                "w-4/5 py-2 pl-4 flex items-center gap-2 m-1 cursor-pointer mt-2 rounded-2xl"+
-                (userId === selectedUserId ? "scale-x-40 shadow-2xl bg-yellow-50" : "")
+                "w-4/5 py-2 pl-4 flex items-center gap-2 m-1 cursor-pointer mt-2 rounded-2xl" +
+                (userId === selectedUserId
+                  ? "scale-x-40 shadow-2xl bg-yellow-50"
+                  : "")
               }
             >
               <Avatar
@@ -224,9 +278,7 @@ const Main = () => {
       </div>
 
       <div className="flex flex-col bg-[#F5F6FA] w-2/3 p-4 border-l border-red-300">
-        {
-          selectedUserId && (<ChatNav name={selectUser } />)
-        }
+        {selectedUserId && <ChatNav name={selectUser} />}
         <div className="flex-grow">
           {!selectedUserId && (
             <div className="  flex h-full flex-grow items-center justify-center ">
