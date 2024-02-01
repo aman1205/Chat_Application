@@ -1,18 +1,15 @@
-const express = require('express')
 const router = require('express').Router()
 const User = require('../model/user')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const MessageModel = require('../model/Message')
 const multer = require('multer');
-const { redirect } = require('react-router-dom')
+require('dotenv').config()
 
 
 
-const app = express()
 
-const jwtSecret = '035dc459d0232d13107f717bd0c64f22f6e7731180a27407fe892b7863e037338184af393a5902735f8c7a4487786f44bfa1d86876686d5200d05ac906007f62';
-const RefreshKey = 'f14fc2b66c49a6c35a481a675ba87c7a19ae415d38cec7c03c2ac0106a41ce9b35d6fdfdf3d3042f5072712d7814ebb28e66c57027df7c784ff395eeee34bd06';
+const jwtSecret =process.env.JWT_SECRET_KEY;
 
 //Function
 //Multer
@@ -95,8 +92,12 @@ router.get('/profile', async (req, res) => {
 router.get('/alluser', async (req, res) => {
     try {
         const data = await User.find({}, { _id:1,name:1, profilePhoto:1});
-
-        res.status(200).json(data)
+        if (data){
+            res.status(200).json(data)
+        }
+        else{
+            res.status(404).json("No User Found")
+        }
     } catch (error) {
         console.error(error);
         res.status(500).json('Server error');
@@ -131,8 +132,10 @@ router.post('/login', async (req, res) => {
     }
 });
 
+
+
 router.post('/logout', (req,res)=>{
-    res.cookie('token', '', {sameSite:'none', secure:true}).json('Logout Done');
+    res.cookie('token', '', {sameSite:'none', secure:true}).status(201).json('Logout Done');
 })
 
 
