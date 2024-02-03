@@ -7,10 +7,10 @@ import Navbar from "./Navbar";
 import ChatNav from "./ChatNav";
 const Main = () => {
   const [ws, setWs] = useState(null);
-  const [onlinePeople, setOnlinePeople] = useState([" "]);
+  const [onlinePeople, setOnlinePeople] = useState({});
   const [offlinePeople, setOfflinePeople] = useState({});
   const [selectedUserId, setSelectedUserId] = useState(null);
-  const { username, id, setId, setUserName } = useContext(UserContext);
+  const { id, setId, setUserName } = useContext(UserContext);
   const [newMessageText, setNewMessageText] = useState("");
   const [messages, setMessages] = useState([]);
   const divUnderMessages = useRef();
@@ -36,28 +36,23 @@ const Main = () => {
 
   // filter unique User
   function showOnlinePeople(peopleArray) {
-    const people = [];
+    const people = {};
     peopleArray.forEach(({ userId, Username, profilePhoto }) => {
       if (userId) {
         people[userId] = {
           username: Username,
-          photo: profilePhoto,
+          profilePhoto: profilePhoto,
           id: userId,
         };
       }
     });
-    // console.log(people)
-    // const updateOnlinePeople = people.filter(
-    //   (userObject) => Object.keys(userObject)[0] !== id
-    // );
-    setOnlinePeople(updateOnlinePeople);
+    setOnlinePeople(people);
   }
   //Online User
   function handleMessage(e) {
     const messageData = JSON.parse(e.data);
     if ("online" in messageData) {
       showOnlinePeople(messageData.online);
-      // console.log(" messageDataonline" , messageWithoutDuo)
     } else if ("text" in messageData) {
       setMessages((prev) => [...prev, { ...messageData }]);
     }
@@ -127,45 +122,11 @@ const Main = () => {
       setWs(null);
     });
   }
-  /// Lodash
-  const messageWithoutDuo = uniqBy(messages, "_id");
-  const onlinePeopleExclOurUser = [...onlinePeople];
-
-  // useEffect(() => {
-  // ... (other useEffect code)
-
-  // // Log out user and update onlinePeople state
-  // const indexOfCurrentUser = onlinePeople.findIndex(user => Object.keys(user)[0] === id);
-  // if (indexOfCurrentUser !== -1) {
-  //   const updatedOnlinePeople = [...onlinePeople];
-  //   updatedOnlinePeople.splice(indexOfCurrentUser, 1);
-  //   setOnlinePeople(updatedOnlinePeople);  // Update state with the modified array
-  // } else {
-  //   console.warn("Current user not found in onlinePeople array.");
-  // }
-  const updateOnlinePeople = onlinePeople.filter(
-    (userObject) => Object.keys(userObject)[0] !== id
-  );
-
-  // setOnlinePeople(prevOnlinePeople => {
-  //   const updatedOnlinePeople = prevOnlinePeople.filter(user => Object.keys(user)[0] !== id);
-  //   return updatedOnlinePeople;
-  // });
-
-  // ... (other useEffect code)
-  // }, [id]);
-
-  // const onlinePeopleExclOurUser = onlinePeople.filter((_, index) => index !== id);
-
-  //Send file Function
-  const sendFile = (ev) => {
-    const file = ev.target.files[0];
-    ws.send(JSON.stringify({}));
-  };
 
   const findSelectedUser = (id) => {
     if (onlinePeople[id]) {
-      setSelectedUser(onlinePeople[id]);
+      const name = onlinePeople[id].username
+      setSelectedUser(name);
     }
     if (offlinePeople[id]) {
       const name = offlinePeople[id].name;
@@ -177,6 +138,11 @@ const Main = () => {
       findSelectedUser(selectedUserId);
     }
   }, [selectedUserId]);
+
+  const messageWithoutDuo = uniqBy(messages, "_id");
+  const onlinePeopleExclOurUser = { ...onlinePeople };
+  delete onlinePeopleExclOurUser[id];
+
 
   return (
     <div className="flex h-screen">
@@ -195,13 +161,12 @@ const Main = () => {
                 >
                   <path
                     stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
                     d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
                   />
                 </svg>
-                {/* <span className="sr-only">Search icon</span> */}
               </div>
               <input
                 type="text"
@@ -211,49 +176,26 @@ const Main = () => {
               />
             </div>
           </div>
-          {/* {Object.keys(onlinePeopleExclOurUser).map((userId) => (
+          {Object.values(onlinePeopleExclOurUser).map((user) => (
             <div
-              key={userId}
-              onClick={() => setSelectedUserId(userId)}
+              key={user.id}
+              onClick={() => setSelectedUserId(user.id)}
               className={
-                "w-4/5 py-2 pl-4 flex items-center gap-2 cursor-pointer m-1 rounded-2xl "+
-                (userId === selectedUserId ? "scale-x-40 shadow-2xl bg-yellow-50" : "")
+                "w-4/5 py-2 pl-4 flex items-center gap-2 cursor-pointer m-1 rounded-2xl " +
+                (user.id === selectedUserId
+                  ? "scale-x-40 shadow-2xl bg-yellow-50"
+                  : "")
               }
             >
               <Avatar
-                username={onlinePeople[userId].username}
-                userId={userId}
-                photo={onlinePeople[userId].photo}
+                username={user.username}
+                userId={user.id}
+                photo={user.profilePhoto}
                 online={true}
               />
-              <span>{onlinePeople[userId]}</span>
+              <span>{user.username}</span>
             </div>
-          ))} */}
-          {updateOnlinePeople.map((data) => {
-            const key = Object.keys(data)[0];
-            const user = data[key];
-            console.table(data);
-            return (
-              <div
-                key={key}
-                onClick={() => setSelectedUserId(user.id)}
-                className={
-                  "w-4/5 py-2 pl-4 flex items-center gap-2 cursor-pointer m-1 rounded-2xl " +
-                  (user.id === selectedUserId
-                    ? "scale-x-40 shadow-2xl bg-yellow-50"
-                    : "")
-                }
-              >
-                <Avatar
-                  username={user.username}
-                  userId={key}
-                  photo={user.photo}
-                  online={true}
-                />
-                <span>{user.username}</span>
-              </div>
-            );
-          })}
+          ))}
           {Object.keys(offlinePeople).map((userId) => (
             <div
               key={userId}
@@ -277,7 +219,7 @@ const Main = () => {
         </div>
       </div>
 
-      <div className="flex flex-col bg-[#F5F6FA] w-2/3 p-4 border-l border-red-300">
+      <div className="flex flex-col bg-[#F5F6FA] w-2/3 p-4">
         {selectedUserId && <ChatNav name={selectUser} />}
         <div className="flex-grow">
           {!selectedUserId && (
@@ -321,8 +263,8 @@ const Main = () => {
             className="flex gap-2 justify-center items-center"
             onSubmit={sendMessage}
           >
-            <div class="relative w-5/6 ">
-              <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+            <div className="relative w-5/6 ">
+              <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                 <svg
                   className="w-4 h-4 text-black dark:black"
                   aria-hidden="true"
