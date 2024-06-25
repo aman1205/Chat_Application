@@ -1,7 +1,7 @@
 import React from "react";
-import Avatar from './Avatar'
+import Avatar from './Avatar';
 
-const UserList = ({ onlinePeopleExclOurUser, selectedUserId, setSelectedUserId ,offlinePeople}) => {
+const UserList = ({ onlinePeopleExclOurUser, selectedUserId, setSelectedUserId, offlinePeople }) => {
   return (
     <>
       {Object.values(onlinePeopleExclOurUser).map((user) => (
@@ -10,9 +10,7 @@ const UserList = ({ onlinePeopleExclOurUser, selectedUserId, setSelectedUserId ,
           onClick={() => setSelectedUserId(user.id)}
           className={
             "w-4/5 py-2 pl-4 flex items-center gap-2 cursor-pointer m-1 rounded-2xl " +
-            (user.id === selectedUserId
-              ? "scale-x-40 shadow-2xl bg-yellow-50"
-              : "")
+            (user.id === selectedUserId ? "scale-x-40 shadow-2xl bg-yellow-50" : "")
           }
         >
           <Avatar
@@ -29,10 +27,8 @@ const UserList = ({ onlinePeopleExclOurUser, selectedUserId, setSelectedUserId ,
           key={userId}
           onClick={() => setSelectedUserId(userId)}
           className={
-            "w-4/5 py-2 pl-4 flex items-center gap-2 m-1 cursor-pointer mt-2 rounded-2xl" +
-            (userId === selectedUserId
-              ? "scale-x-40 shadow-2xl bg-yellow-50"
-              : "")
+            "w-4/5 py-2 pl-4 flex items-center gap-2 m-1 cursor-pointer mt-2 rounded-2xl " +
+            (userId === selectedUserId ? "scale-x-40 shadow-2xl bg-yellow-50" : "")
           }
         >
           <Avatar

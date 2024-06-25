@@ -6,6 +6,7 @@ export const UserContext = createContext({});
 export function UserContextProvider({ children }) {
   const [username, setUserName] = useState(null);
   const [id, setId] = useState(null);
+  const [userPhoto , setUserPhoto]=useState(null)
   // const [chatid ,setChatID]=useState(null);
   
   // useEffect(() => {
@@ -29,6 +30,7 @@ export function UserContextProvider({ children }) {
         const response = await axios.get('http://localhost:5000/api/profile', { withCredentials: true });
         setId(response.data._id);
         setUserName(response.data.name);
+        setUserPhoto(response.data.profilePhoto)
       } catch (error) {
         console.error(error);
       }
@@ -38,7 +40,7 @@ export function UserContextProvider({ children }) {
   }, []);
 
   return (
-    <UserContext.Provider value={{username, setUserName, id, setId }}>
+    <UserContext.Provider value={{username, setUserName, id, setId , userPhoto, setUserPhoto}}>
       {children}
     </UserContext.Provider>
   );
