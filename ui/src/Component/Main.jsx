@@ -1,79 +1,115 @@
-import React, { useContext, useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import axios from "axios";
-import Avatar from "./Avatar";
-import { UserContext } from "../UserContext";
 import { uniqBy } from "lodash";
+import { useDispatch, useSelector } from "react-redux";
 import Navbar from "./Navbar";
 import ChatNav from "./ChatNav";
 import SearchBar from "./SearchBar";
 import UserList from "./UserList";
 import Button from "./Button";
 import MessageComponent from "./Messages";
+import { logout } from "../redux/actions/authActions";
+
+axios.defaults.withCredentials = true;
 
 const Main = () => {
-  const [ws, setWs] = useState(null);
   const [onlinePeople, setOnlinePeople] = useState({});
   const [offlinePeople, setOfflinePeople] = useState({});
   const [selectedUserId, setSelectedUserId] = useState(null);
-  const { username, id, setId, setUserName } = useContext(UserContext);
   const [newMessageText, setNewMessageText] = useState("");
   const [messages, setMessages] = useState([]);
   const [selectUser, setSelectedUser] = useState(null);
+  const user = useSelector((state) => state.authReducer.user);
+  const ws = useRef(null);
+  const dispatch = useDispatch();
 
 
+  const showOnlinePeople = useCallback((peopleArray) => {
+    const people = {};
+    peopleArray.forEach(({ userId, username, profilePhoto }) => {
+      if (userId) {
+        people[userId] = { username, profilePhoto, id: userId };
+      }
+    });
+    setOnlinePeople((prevOnlinePeople) => {
+      if (JSON.stringify(prevOnlinePeople) !== JSON.stringify(people)) {
+        return people;
+      }
+      return prevOnlinePeople;
+    });
+  }, []);
+
+  const showOfflinePeople = useCallback((peopleArray) => {
+    const people = {};
+    peopleArray.forEach(({ userId, username, profilePhoto }) => {
+      if (userId) {
+        people[userId] = { username, profilePhoto, id: userId };
+      }
+    });
+    setOfflinePeople((prevOfflinePeople) => {
+      if (JSON.stringify(prevOfflinePeople) !== JSON.stringify(people)) {
+        return people;
+      }
+      return prevOfflinePeople;
+    });
+  }, []);
   const handleMessage = useCallback((e) => {
     const messageData = JSON.parse(e.data);
-    if ("online" in messageData) {
+    if ("online" in messageData && "offline" in messageData) {
       showOnlinePeople(messageData.online);
+      showOfflinePeople(messageData.offline);
     } else if ("text" in messageData) {
       setMessages((prev) => [...prev, messageData]);
     }
-  }, []);
+  },[showOfflinePeople , showOnlinePeople]);
 
   const connectToWs = useCallback(() => {
-    const ws = new WebSocket("ws://localhost:5000");
-    setWs(ws);
-    
-    ws.addEventListener("message", handleMessage);
-    ws.addEventListener("close", () => {
-      setTimeout(() => {
-        console.log("Disconnected. Trying to reconnect.");
-        connectToWs();
-      }, 1000);
-    });
+    ws.current = new WebSocket("ws://localhost:5000");
+
+    ws.current.onopen = () => {
+      console.log("WebSocket connected");
+    };
+
+    ws.current.onmessage = handleMessage;
+
+    ws.current.onclose = () => {
+      console.log("WebSocket disconnected, attempting to reconnect...");
+      setTimeout(connectToWs, 1000);
+    };
+
+    ws.current.onerror = (err) => {
+      console.error("WebSocket error:", err);
+      ws.current.close();
+    };
 
     return () => {
-      ws.removeEventListener("message", handleMessage);
-      ws.close();
+      if (ws.current) {
+        ws.current.close();
+      }
     };
   }, [handleMessage]);
 
   useEffect(() => {
-    connectToWs();
+    const cleanUp = connectToWs();
+    return () => {
+      cleanUp();
+    };
   }, [connectToWs]);
-
-  const showOnlinePeople = (peopleArray) => {
-    const people = {};
-    peopleArray.forEach(({ userId, Username, profilePhoto }) => {
-      if (userId) {
-        people[userId] = { username: Username, profilePhoto, id: userId };
-      }
-    });
-    setOnlinePeople(people);
-  };
 
   
 
-  const sendMessage = async (e) => {
+  const sendMessage = (e) => {
     e.preventDefault();
-    if (ws) {
-      ws.send(JSON.stringify({ recipient: selectedUserId, text: newMessageText }));
+    if (ws.current) {
+      ws.current.send(
+        JSON.stringify({ recipient: selectedUserId, text: newMessageText })
+      );
       setNewMessageText("");
       setMessages((prev) => [
         ...prev,
         {
           text: newMessageText,
-          sender: id,
+          sender: user.id,
           recipient: selectedUserId,
           _id: Date.now(),
         },
@@ -85,7 +121,14 @@ const Main = () => {
     const fetchMessages = async () => {
       try {
         if (selectedUserId) {
-          const response = await axios.get(`http://localhost:5000/api/messages/${selectedUserId}`);
+          const response = await axios.get(
+            `http://localhost:5000/api/messages/${selectedUserId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              },
+            }
+          );
           setMessages(response.data);
         }
       } catch (error) {
@@ -95,44 +138,33 @@ const Main = () => {
     fetchMessages();
   }, [selectedUserId]);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/alluser");
-        const offlinePeopleArr = response.data
-          .filter((p) => p._id !== id)
-          .filter((p) => !Object.keys(onlinePeople).includes(p._id));
-
-        const offlinePeopleObj = {};
-        offlinePeopleArr.forEach((p) => {
-          offlinePeopleObj[p._id] = p;
-        });
-        setOfflinePeople(offlinePeopleObj);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
-    fetchUsers();
-  }, [onlinePeople, id]);
-
-  const logout = async () => {
+  const Logout = async () => {
     try {
-      await axios.post("http://localhost:5000/api/logout");
-      setId(null);
-      setUserName(null);
-      setWs(null);
+      await axios.post("http://localhost:5000/api/logout", null, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
+      localStorage.removeItem("accessToken");
+      dispatch(logout());
+      if (ws.current) {
+        ws.current.close();
+      }
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
-  const findSelectedUser = useCallback((userId) => {
-    if (onlinePeople[userId]) {
-      setSelectedUser(onlinePeople[userId].username);
-    } else if (offlinePeople[userId]) {
-      setSelectedUser(offlinePeople[userId].name);
-    }
-  }, [onlinePeople, offlinePeople]);
+  const findSelectedUser = useCallback(
+    (userId) => {
+      if (onlinePeople[userId]) {
+        setSelectedUser(onlinePeople[userId].username);
+      } else if (offlinePeople[userId]) {
+        setSelectedUser(offlinePeople[userId].username);
+      }
+    },
+    [onlinePeople, offlinePeople]
+  );
 
   useEffect(() => {
     if (selectedUserId) {
@@ -140,47 +172,62 @@ const Main = () => {
     }
   }, [selectedUserId, findSelectedUser]);
 
-  const messageWithoutDuo = uniqBy(messages, "_id");
-  const onlinePeopleExclOurUser = { ...onlinePeople };
-  delete onlinePeopleExclOurUser[id];
-
-
+  const messageWithoutDuo = useMemo(() => uniqBy(messages, "_id"), [messages]);
+  const onlinePeopleExclOurUser = useMemo(() => {
+    const people = { ...onlinePeople };
+    delete people[user.id];
+    return people;
+  }, [onlinePeople, user.id]);
   return (
-    <div className="flex h-screen">
-      <div className="bg-[#F5F6FA] w-1/3 flex flex-col justify-center items-center gap-2">
-        <Navbar username={username} />
-        <div className="flex-grow w-5/6 bg-white shadow-2xl rounded-2xl text-center flex flex-col items-center mt-4 mb-6">
+    <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden">
+      {/* Left Side Panel */}
+      <div className="bg-[#F5F6FA] w-full md:w-1/3 flex flex-col justify-between items-center">
+        <Navbar username={user.name} />
+        <div className="flex-grow w-[95%] bg-white shadow-2xl rounded-2xl text-center flex flex-col items-center mt-4 mb-6 overflow-hidden">
           <SearchBar />
           <UserList
             onlinePeopleExclOurUser={onlinePeopleExclOurUser}
             selectedUserId={selectedUserId}
             setSelectedUserId={setSelectedUserId}
             offlinePeople={offlinePeople}
+            currentUser={user}
           />
         </div>
-        <button onClick={logout} className="bg-red-500 text-white p-2 rounded-2xl ">Logout</button>
+        <button
+          onClick={Logout}
+          className="bg-[#2680EB] text-white py-2 px-4 rounded-2xl m-4"
+        >
+          Logout
+        </button>
       </div>
 
-      <div className="flex flex-col bg-[#F5F6FA] w-2/3 p-4">
-        {selectedUserId && <ChatNav name={selectUser} />}
-        <div className="flex-grow">
+      {/* Right Side Panel */}
+      <div className="flex flex-col bg-[#F5F6FA] w-full h-full md:w-2/3 p-4 relative">
+        {selectedUserId && <ChatNav name={selectUser} setSelectedUserId={setSelectedUserId} />}
+        <div className="flex flex-col flex-grow h-full">
           {!selectedUserId ? (
             <div className="flex h-full flex-grow items-center justify-center">
-              <div className="text-black">
+              <div className="text-black text-center">
                 Chat With Your Friends
                 <br />
-                Send and Receive Messages to others with encryption
+                Send and Receive Messages with Encryption
               </div>
             </div>
           ) : (
-            <MessageComponent messages={messages} messageWithoutDuo={messageWithoutDuo} />
+            <div
+            >
+              <MessageComponent
+              messages={messages}
+              messageWithoutDuo={messageWithoutDuo}
+            />
+            </div>
           )}
         </div>
-
+        {/* Message Input Section */}
         {selectedUserId && (
-          <form className="flex gap-2 justify-center items-center" onSubmit={sendMessage}>
+          <form className="flex  justify-center items-center absolute bottom-0 w-full mb-2" onSubmit={sendMessage}>
             <div className="relative w-5/6">
-              <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <svg
                   className="w-4 h-4 text-black"
                   aria-hidden="true"
@@ -203,7 +250,7 @@ const Main = () => {
                 placeholder="Type a message"
                 value={newMessageText}
                 onChange={(e) => setNewMessageText(e.target.value)}
-                className="block w-full p-4 ps-10 text-sm border border-gray-300 bg-white focus:ring-blue-500 focus:border-blue-500 shadow-2xl rounded-2xl"
+                className="block w-full p-4 pl-10 text-sm border border-gray-300 bg-white focus:ring-blue-500 focus:border-blue-500 shadow-2xl rounded-2xl h-12"
                 required
               />
               <Button />

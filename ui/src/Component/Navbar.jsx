@@ -1,50 +1,34 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { useSelector } from "react-redux";
+
 const Navbar = () => {
-  const [userData, setUserData] = useState({});
+  const authReducer = useSelector((state) => state.authReducer);
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/profile", {
-          withCredentials: true, // Ensure that cookies are sent with the request
-        });
-
-        setUserData(response.data);
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-      }
-    };
-
-    fetchUserProfile();
-  }, []);
   return (
-    <nav className="bg-white  w-full  flex  items-center justify-between  nav-div p-2">
-      <div className="max-w-screen-xl first-div">
-        <div className="profile-div flex flex-row">
-          <div href="/" className="flex items-center rounded-full ml-4">
-            <img
-              src={userData.profilePhoto}
-              className="h-20 mr-3 w-20 object-cover  rounded-full  ring-2 ring-gray-300 dark:ring-gray-500"
-              alt="Flowbite Logo"
-            />
-          </div>
-          <div className="name-div flex items-center flex-col justify-center">
-            <h3 className="text-center font-bold text-xl	">{userData.name}</h3>
-            <span className="">@Lorem ipsum dolor</span>
-          </div>
+    <nav className="bg-white w-full flex items-center justify-between p-2 md:p-4">
+      <div className="flex items-center">
+        <div className="flex-shrink-0">
+          <img
+            src={authReducer.user.profilePhoto}
+            className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 object-cover rounded-full ring-2 ring-gray-300"
+            alt="Profile"
+          />
+        </div>
+        <div className="ml-2 sm:ml-4 flex flex-col justify-center">
+          <h3 className="text-sm sm:text-lg md:text-xl font-bold">
+            {authReducer.user.name}
+          </h3>
+          <span className="text-xs sm:text-sm md:text-base">
+            Simplicity is the soul of efficiency.
+          </span>
         </div>
       </div>
-      <div className="second-div relative">
+      <div className="relative flex-shrink-0">
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          xmlnsXlink="http://www.w3.org/1999/xlink"
-          version="1.1"
-          className="w-8 h-8"
+          className="w-6 h-6 sm:w-8 sm:h-8"
           viewBox="0 0 256 256"
-          xmlSpace="preserve"
         >
-          <g transform="translate(1.4065934065934016 1.4065934065934016) scale(2.81 2.81)">
+          <g transform="translate(1.4065934065934016 1.4065934065934016) scale(2.81 2.80)">
             <path
               d="M 77.435 77.343 H 12.565 c -3.467 0 -6.288 -2.82 -6.288 -6.287 c 0 -3.905 1.703 -7.601 4.673 -10.138 c 1.634 -1.395 2.57 -3.427 2.57 -5.574 V 31.479 C 13.521 14.122 27.643 0 45 0 s 31.479 14.122 31.479 31.479 v 23.865 c 0 2.147 0.937 4.179 2.57 5.574 c 2.97 2.537 4.673 6.231 4.673 10.138 C 83.722 74.522 80.901 77.343 77.435 77.343 z M 45 6 C 30.951 6 19.521 17.43 19.521 31.479 v 23.865 c 0 3.905 -1.703 7.601 -4.673 10.137 c -1.633 1.396 -2.57 3.427 -2.57 5.575 c 0 0.158 0.129 0.287 0.288 0.287 h 64.869 c 0.158 0 0.287 -0.129 0.287 -0.287 c 0 -2.148 -0.937 -4.181 -2.569 -5.575 c -2.971 -2.537 -4.674 -6.232 -4.674 -10.137 V 31.479 C 70.479 17.43 59.049 6 45 6 z"
               style={{
@@ -58,7 +42,6 @@ const Navbar = () => {
                 fillRule: "nonzero",
                 opacity: 1,
               }}
-              transform="matrix(1 0 0 1 0 0)"
               strokeLinecap="round"
             />
             <path
@@ -74,12 +57,11 @@ const Navbar = () => {
                 fillRule: "nonzero",
                 opacity: 1,
               }}
-              transform="matrix(1 0 0 1 0 0)"
               strokeLinecap="round"
             />
           </g>
         </svg>
-        <span className="absolute w-3 h-3 bg-red-800 top-0 left-o rounded-full border border-white"></span>
+        <span className="absolute w-2 h-2 sm:w-3 sm:h-3 bg-red-800 top-0 right-0 rounded-full border border-white"></span>
       </div>
     </nav>
   );

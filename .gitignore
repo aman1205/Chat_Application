@@ -1,0 +1,14 @@
+# Ignore node_modules in api and ui directories
+/api/node_modules
+/api/.env
+/ui/node_modules
+
+# Optionally, ignore any other node_modules folders in the project
+node_modules
+
+# Other common files/folders to ignore
+.DS_Store
+.env
+/dist
+/build
+coverage

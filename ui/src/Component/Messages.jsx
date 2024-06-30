@@ -1,29 +1,30 @@
-import React, {useContext, useEffect, useState, useRef } from "react";
-import { UserContext } from "../UserContext";
+import React, { useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
 
 const MessageComponent = ({ messages, messageWithoutDuo }) => {
-  const divUnderMessages = useRef();
-  const { id } = useContext(UserContext);
+  const user = useSelector((state) => state.authReducer.user);
+  const divUnderMessages = useRef(null);
+
   useEffect(() => {
-    const div = divUnderMessages.current;
-    if (div) {
-      div.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (divUnderMessages.current) {
+      divUnderMessages.current.scrollIntoView({ behavior: "smooth"  , block: "end"});
     }
   }, [messages]);
+
   return (
-    <div className="relative h-full">
-      <div className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-2 hide-scrollbar">
+    <div className="flex flex-col h-3/4">
+      <div className="flex-grow overflow-y-scroll p-4 hide-scrollbar">
         {messageWithoutDuo.map((item) => (
           <div
             key={item._id}
-            className={item.sender === id ? "text-right " : "text-left"}
+            className={item.sender === user.id ? "text-right" : "text-left"}
           >
             <div
               className={
-                "text-left inline-block p-4 my-2  max-w-xs w-auto text-sm shadow-xl	" +
-                (item.sender === id
-                  ? "bg-[#2680EB] text-white  rounded-xl mr-16 shadow-xl	"
-                  : "bg-white text-black rounded-xl  max-w-xs w-auto ml-16")
+                "inline-block p-4 my-2 max-w-[80%] sm:max-w-xs text-sm shadow-xl " +
+                (item.sender === user.id
+                  ? "bg-[#2680EB] text-white rounded-xl mr-4 sm:mr-16"
+                  : "bg-white text-black rounded-xl ml-4 sm:ml-16")
               }
             >
               {item.text}

@@ -1,46 +1,69 @@
 import React from "react";
-import Avatar from './Avatar';
 
-const UserList = ({ onlinePeopleExclOurUser, selectedUserId, setSelectedUserId, offlinePeople }) => {
+const UserList = ({
+  onlinePeopleExclOurUser,
+  selectedUserId,
+  setSelectedUserId,
+  offlinePeople,
+  currentUser,
+}) => {
+  const filteredOnlinePeople = Object.values(onlinePeopleExclOurUser).filter(
+    (person) => person.id !== currentUser.id
+  );
+
+  const filteredOfflinePeople = Object.values(offlinePeople).filter(
+    (person) => person.id !== currentUser.id
+  );
+
   return (
-    <>
-      {Object.values(onlinePeopleExclOurUser).map((user) => (
+    <div className="w-full max-h-[400px] overflow-y-auto p-2">
+      {filteredOnlinePeople.map((person) => (
         <div
-          key={user.id}
-          onClick={() => setSelectedUserId(user.id)}
-          className={
-            "w-4/5 py-2 pl-4 flex items-center gap-2 cursor-pointer m-1 rounded-2xl " +
-            (user.id === selectedUserId ? "scale-x-40 shadow-2xl bg-yellow-50" : "")
-          }
+          key={person.id}
+          className={`${
+            selectedUserId === person.id
+              ? "bg-[#2680EB] text-white"
+              : "hover:bg-gray-200"
+          } flex items-center text-center py-1 px-2 rounded-full cursor-pointer mb-2`}
+          onClick={() => setSelectedUserId(person.id)}
         >
-          <Avatar
-            username={user.username}
-            userId={user.id}
-            photo={user.profilePhoto}
-            online={true}
-          />
-          <span>{user.username}</span>
+          <div className="relative">
+            <img
+              src={person.profilePhoto}
+              alt="profile"
+              className="w-10 h-10 rounded-full object-cover"
+            />
+            <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border bg-green-500"></div>
+          </div>
+          <div className="ml-2">
+            <p className="font-semibold">{person.username}</p>
+          </div>
         </div>
       ))}
-      {Object.keys(offlinePeople).map((userId) => (
+      {filteredOfflinePeople.map((person) => (
         <div
-          key={userId}
-          onClick={() => setSelectedUserId(userId)}
-          className={
-            "w-4/5 py-2 pl-4 flex items-center gap-2 m-1 cursor-pointer mt-2 rounded-2xl " +
-            (userId === selectedUserId ? "scale-x-40 shadow-2xl bg-yellow-50" : "")
-          }
+          key={person.id}
+          className={`${
+            selectedUserId === person.id
+              ? "bg-[#2680EB] text-white "
+              : "hover:bg-gray-200"
+          } flex items-center text-center py-1 px-2 rounded-full cursor-pointer mb-2`}
+          onClick={() => setSelectedUserId(person.id)}
         >
-          <Avatar
-            username={offlinePeople[userId].name}
-            userId={userId}
-            photo={offlinePeople[userId].profilePhoto}
-            online={false}
-          />
-          <span>{offlinePeople[userId].name}</span>
+          <div className="relative">
+            <img
+              src={person.profilePhoto}
+              alt="profile"
+              className="w-10 h-10 rounded-full object-cover"
+            />
+            <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border bg-gray-500"></div>
+          </div>
+          <div className="ml-2">
+            <p className="font-semibold">{person.username}</p>
+          </div>
         </div>
       ))}
-    </>
+    </div>
   );
 };
 

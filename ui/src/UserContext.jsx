@@ -1,46 +1,62 @@
+import { createContext, useState, useEffect } from "react";
 import axios from "axios";
-import { createContext, useEffect, useState } from "react";
 
 export const UserContext = createContext({});
 
 export function UserContextProvider({ children }) {
-  const [username, setUserName] = useState(null);
-  const [id, setId] = useState(null);
-  const [userPhoto , setUserPhoto]=useState(null)
-  // const [chatid ,setChatID]=useState(null);
-  
-  // useEffect(() => {
-  //   async function fetchData() {
-  //     try {
-  //       const response = await axios.get("http://localhost:5000/api/profile", {
-  //         withCredentials: true,
-  //       });
-  //       setUserName(response.data.userName)
-  //       setId(response.data.userId)
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   }
+  const [auth, setAuth] = useState(() => {
+    const savedAuth = localStorage.getItem("auth");
+    return savedAuth
+      ? JSON.parse(savedAuth)
+      : {
+          isAuthenticated: false,
+          user: null,
+          accessToken: null,
+        };
+  });
 
-  //   fetchData();
-  // }, []);
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/profile', { withCredentials: true });
-        setId(response.data._id);
-        setUserName(response.data.name);
-        setUserPhoto(response.data.profilePhoto)
-      } catch (error) {
-        console.error(error);
+    const checkAuth = async () => {
+      const savedAccessToken = localStorage.getItem("accessToken");
+      if (savedAccessToken) {
+        try {
+          const { data } = await axios.get("http://localhost:5000/api/profile", {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${savedAccessToken}`,
+            },
+          });
+          setAuth({
+            isAuthenticated: true,
+            user: data,
+            accessToken: savedAccessToken,
+          });
+        } catch (error) {
+          console.error("Error fetching profile:", error);
+          setAuth({
+            isAuthenticated: false,
+            user: null,
+            accessToken: null,
+          });
+          localStorage.removeItem("auth");
+          localStorage.removeItem("accessToken");
+        }
       }
     };
-  
-    fetchProfile();
+    checkAuth();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem("auth", JSON.stringify(auth));
+    if (auth.accessToken) {
+      localStorage.setItem("accessToken", auth.accessToken);
+    } else {
+      localStorage.removeItem("accessToken");
+    }
+  }, [auth]);
+
   return (
-    <UserContext.Provider value={{username, setUserName, id, setId , userPhoto, setUserPhoto}}>
+    <UserContext.Provider value={{ auth, setAuth }}>
       {children}
     </UserContext.Provider>
   );
