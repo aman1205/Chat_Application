@@ -20,7 +20,7 @@ const app = express();
 // Middlewares
 app.use(cors({
   credentials: true,
-  origin: 'http://localhost:3000'
+  origin: '*'
 }));
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
