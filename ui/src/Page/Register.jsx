@@ -1,5 +1,5 @@
 import React, { useState  , useContext} from 'react';
-import axios from 'axios';
+import api from '../axios';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../UserContext';
 const RegistrationForm = () => {
@@ -28,7 +28,7 @@ const RegistrationForm = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/register', formData);
+      const response = await api.post('/api/register', formData);
       if (response.status===201) {
         alert('User registered successfully!');
 

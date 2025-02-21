@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../redux/actions/authActions";
+import api from "../axios";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -15,7 +15,7 @@ const LoginForm = () => {
     e.preventDefault();
 
     try {
-      const { data } = await axios.post("http://localhost:5000/api/login", {
+      const { data } = await api.post("/api/login", {
         email,
         password,
       });

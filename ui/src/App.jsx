@@ -1,12 +1,12 @@
 import React from "react";
-import axios from "axios";
+import api from "./axios";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
 import Main from "./Component/Main";
 import Login from "./Page/Login";
 import Register from "./Page/Register";
-import AuthRoute from "./AuthRoute";
-axios.defaults.withCredentials = true;
+import AuthRoute from "./AuthRoute"; 
+api.defaults.withCredentials = true;
 
 
 function App() {

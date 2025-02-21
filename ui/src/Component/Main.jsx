@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import axios from "axios";
+import api from "../axios";
 import { uniqBy } from "lodash";
 import { useDispatch, useSelector } from "react-redux";
 import Navbar from "./Navbar";
@@ -9,8 +9,9 @@ import UserList from "./UserList";
 import Button from "./Button";
 import MessageComponent from "./Messages";
 import { logout } from "../redux/actions/authActions";
+import { WS_URL } from "../constant";
 
-axios.defaults.withCredentials = true;
+api.defaults.withCredentials = true;
 
 const Main = () => {
   const [onlinePeople, setOnlinePeople] = useState({});
@@ -64,7 +65,7 @@ const Main = () => {
   },[showOfflinePeople , showOnlinePeople]);
 
   const connectToWs = useCallback(() => {
-    ws.current = new WebSocket("ws://localhost:5000");
+    ws.current = new WebSocket(WS_URL);
 
     ws.current.onopen = () => {
       console.log("WebSocket connected");
@@ -121,8 +122,8 @@ const Main = () => {
     const fetchMessages = async () => {
       try {
         if (selectedUserId) {
-          const response = await axios.get(
-            `http://localhost:5000/api/messages/${selectedUserId}`,
+          const response = await api.get(
+            `/api/messages/${selectedUserId}`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
@@ -140,7 +141,7 @@ const Main = () => {
 
   const Logout = async () => {
     try {
-      await axios.post("http://localhost:5000/api/logout", null, {
+      await api.post("/api/logout", null, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
