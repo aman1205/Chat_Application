@@ -1,48 +1,48 @@
-const express = require('express');
-const UserRoutes = require('./router/userRoutes');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const ws = require('ws');
-const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
-const MessageModel = require('./model/Message');
-const UserModel = require('./model/user');
-const compression = require('compression');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-require('dotenv').config();
-const DataBaseConnection = require('./config/db');
-const cluster = require('cluster');
-const numCPUs = require('os').cpus().length;
+const express = require("express");
+const UserRoutes = require("./router/userRoutes");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const ws = require("ws");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+const MessageModel = require("./model/Message");
+const UserModel = require("./model/user");
+const compression = require("compression");
+const helmet = require("helmet");
+require("dotenv").config();
+const DataBaseConnection = require("./config/db");
+const cluster = require("cluster");
+const numCPUs = require("os").cpus().length;
 
 const app = express();
 
 // Middlewares
-app.use(cors({
-  credentials: true,
-  origin: '*'
-}));
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+app.use(
+  cors({
+    credentials: true,
+    origin: process.env.ALLOWED_ORIGIN || "http://localhost:3000",
+  })
+);
+app.use(bodyParser.json({ limit: "10mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 app.use(compression());
 app.use(helmet());
 
-// Rate Limiting
-// const limiter = rateLimit({
-//   windowMs: 1 * 60 * 1000, // 15 minutes
-//   max: 100 // limit each IP to 100 requests per windowMs
-// });
-// app.use(limiter);
 const port = process.env.PORT || 5000;
 
 // Connecting to Database
 DataBaseConnection();
 
 // Routes
-app.use('/api', UserRoutes);
-app.get('/', (req, res) => {
+app.use("/api", UserRoutes);
+app.get("/", (req, res) => {
   res.status(200).json({ message: "Hey developer" });
+});
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
 });
 
 // JWT Middleware
@@ -69,7 +69,7 @@ if (cluster.isMaster) {
     cluster.fork();
   }
 
-  cluster.on('exit', (worker, code, signal) => {
+  cluster.on("exit", (worker, code, signal) => {
     console.log(`Worker ${worker.process.pid} died`);
     // Replace the dead worker
     cluster.fork();
@@ -83,9 +83,8 @@ if (cluster.isMaster) {
     process.exit();
   };
 
-  process.on('SIGTERM', gracefulShutdown);
-  process.on('SIGINT', gracefulShutdown);
-
+  process.on("SIGTERM", gracefulShutdown);
+  process.on("SIGINT", gracefulShutdown);
 } else {
   // Worker code - handle WebSocket connections
   const server = app.listen(port, () => {
@@ -94,105 +93,8 @@ if (cluster.isMaster) {
 
   const wss = new ws.WebSocketServer({ server });
 
-  wss.on('connection', (connection, req) =>   {
-    function notifyAboutOnlinePeople() {
-      const onlinePeople = [...wss.clients].filter(client => client.isAlive).map(client => ({
-        userId: client.userId,
-        username: client.username,
-        profilePhoto: client.profilePhoto,
-      }));
-
-      const onlineUserIds = onlinePeople.map(user => user.userId);
-
-      getAllUsers().then(allUsers => {
-        const offlinePeople = allUsers.filter(user => !onlineUserIds.includes(user._id.toString())).map(user => ({
-          userId: user._id,
-          username: user.name,
-          profilePhoto: user.profilePhoto,
-        }));
-
-        const payload = {
-          online: onlinePeople,
-          offline: offlinePeople,
-        };
-
-        [...wss.clients].forEach(client => {
-          client.send(JSON.stringify(payload));
-        });
-      });
-    }
-
-    connection.isAlive = true;
-    connection.timer = setInterval(() => {
-      connection.ping();
-      connection.deathTimer = setTimeout(() => {
-        connection.isAlive = false;
-        clearInterval(connection.timer);
-        connection.terminate();
-        notifyAboutOnlinePeople();
-      }, 1000);
-    }, 5000);
-
-    connection.on('pong', () => {
-      clearTimeout(connection.deathTimer);
-    });
-
-    const cookies = req.headers.cookie;
-    if (cookies) {
-      const tokenCookiesString = cookies.split(';').find(str => str.trim().startsWith('refreshToken='));
-      if (tokenCookiesString) {
-        const token = tokenCookiesString.split('=')[1];
-        if (token) {
-          jwt.verify(token, process.env.REFRESH_TOKEN_SECRET, async (err, user) => {
-            if (err) {
-              console.error("JWT verification error:", err);
-              return;
-            }
-            const userId = user.userId;
-            const foundUser = await UserModel.findById(userId);
-            if (foundUser) {
-              connection.userId = userId;
-              connection.username = foundUser.name;
-              connection.profilePhoto = foundUser.profilePhoto;
-              notifyAboutOnlinePeople();
-            }
-          });
-        }
-      }
-    }
-
-    connection.on('message', async (message) => {
-      try {
-        const messData = JSON.parse(message.toString());
-        const { recipient, text } = messData;
-        const messDoc = await MessageModel.create({
-          sender: connection.userId,
-          recipient,
-          text,
-        });
-        if (recipient && text) {
-          [...wss.clients]
-            .filter(c => c.userId === recipient)
-            .forEach(c => c.send(JSON.stringify({
-              text,
-              sender: connection.userId,
-              recipient,
-              _id: messDoc._id,
-            })));
-        }
-      } catch (error) {
-        console.error("Error processing message:", error);
-      }
-    });
-
-    connection.on('close', () => {
-      clearInterval(connection.timer);
-      clearTimeout(connection.deathTimer);
-      notifyAboutOnlinePeople();
-    });
-
-    notifyAboutOnlinePeople();
-  });
+  // Removed inline WebSocket logic and replaced with a separate module
+  require("./websocketHandler")(wss);
 
   async function getAllUsers() {
     return await UserModel.find({});
