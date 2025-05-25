@@ -2,7 +2,7 @@ import React from "react";
 
 const ChatNav = ({ name, setSelectedUserId }) => {
   return (
-      <header class="flex items-center justify-between p-4 bg-white shadow-md rounded-full z-50">
+      <header class="flex items-center justify-between p-4 bg-white shadow-md rounded-full z-50 w-full">
         <div class="flex items-center">
           <button
             onClick={() => setSelectedUserId(null)}

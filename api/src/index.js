@@ -20,7 +20,7 @@ const app = express();
 app.use(
   cors({
     credentials: true,
-    origin: process.env.ALLOWED_ORIGIN || "http://localhost:3000",
+    origin: process.env.ALLOWED_ORIGIN || "http://localhost:3000 " || "http://192.168.201.162:3000",
   })
 );
 app.use(bodyParser.json({ limit: "10mb" }));

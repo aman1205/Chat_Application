@@ -12,7 +12,7 @@ const MessageComponent = ({ messages, messageWithoutDuo }) => {
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-3/4">
+    <div className="flex flex-col">
       <div className="flex-grow overflow-y-scroll p-4 hide-scrollbar">
         {messageWithoutDuo.map((item) => (
           <div
