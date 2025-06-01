@@ -362,13 +362,17 @@ const Main = () => {
           </div>
         )}
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto px-1 sm:px-4 py-2 sm:py-6 bg-[#f7f8fa] min-w-0">
-          <MessageComponent
-            messages={messages}
-            messageWithoutDuo={messageWithoutDuo}
-            user={user}
-          />
-        </div>
+        {
+          selectedUserId && (
+            <div className="flex-1 overflow-y-auto px-1 sm:px-4 py-2 sm:py-6 bg-[#f7f8fa] min-w-0">
+            <MessageComponent
+              messages={messages}
+              messageWithoutDuo={messageWithoutDuo}
+              user={user}
+            />
+          </div>
+        )}
+       
         {/* Message Input */}
         {selectedUserId && (
           <form
@@ -400,6 +404,13 @@ const Main = () => {
             </button>
           </form>
         )}
+        {
+          !selectedUserId && (
+            <div className="flex items-center justify-center h-full overflow-hidden">
+              <h1 className="text-2xl text-black ">Select a user to chat</h1>
+            </div>
+          )
+        }
       </main>
       {/* Mobile overlay */}
       {isMobileMenuOpen && (

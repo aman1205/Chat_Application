@@ -1,6 +1,6 @@
 import React from "react";
 
-const ChatNav = ({ name, setSelectedUserId }) => {
+const ChatNav = ({ name, setSelectedUserId  }) => {
   return (
       <header class="flex items-center justify-between p-4 bg-white shadow-md rounded-full z-50 w-full">
         <div class="flex items-center">
@@ -26,7 +26,6 @@ const ChatNav = ({ name, setSelectedUserId }) => {
           </button>
           <div>
             <h2 class="text-lg font-bold">{name}</h2>
-            <p class="text-sm text-muted-foreground">Online</p>
           </div>
         </div>
         <div class="flex items-center">

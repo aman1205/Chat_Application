@@ -2,6 +2,8 @@ import React, { useState, useContext } from "react";
 import api from "../axios";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../UserContext";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../redux/actions/authActions";
 
 const RegistrationForm = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +16,8 @@ const RegistrationForm = () => {
   const [error, setError] = useState("");
   const { setAuth } = useContext(UserContext);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
 
   const handleChange = async (e) => {
     if (e.target.name === "profilePhoto") {
@@ -32,15 +36,14 @@ const RegistrationForm = () => {
 
     try {
       const response = await api.post("/api/register", formData);
+      console.log(response , 'response' , response.status , "status") 
       if (response.status === 201) {
-        setAuth({
-          isAuthenticated: true,
-          user: response.data.user,
-          accessToken: response.data.accessToken,
-        });
+        dispatch(loginSuccess(response.data.user, response.data.accessToken));
+        localStorage.setItem("accessToken", response.data.accessToken);
         navigate("/login");
       }
     } catch (error) {
+      console.log(error , 'error')
       setError(
         error.response?.data?.message ||
           "Error registering user. Please try again."
