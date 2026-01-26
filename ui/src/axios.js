@@ -57,6 +57,13 @@ api.interceptors.response.use(
       console.log(`[API Response] ${response.config.method.toUpperCase()} ${response.config.url}`, response.status);
     }
 
+    // Check if server sent a new access token (token was refreshed)
+    const newAccessToken = response.headers['x-new-access-token'];
+    if (newAccessToken) {
+      console.log('[API] Token refreshed, updating localStorage');
+      localStorage.setItem('accessToken', newAccessToken);
+    }
+
     return response;
   },
   async (error) => {

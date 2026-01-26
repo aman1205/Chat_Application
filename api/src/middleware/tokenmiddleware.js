@@ -44,12 +44,15 @@ function handleTokenExpired(req, res, next) {
     const newAccessToken = generateAccessToken({ userId: decoded.userId });
     const newRefreshToken = generateRefreshToken({ userId: decoded.userId });
 
-    // Send the new tokens in response cookies
+    // Send the new tokens in response cookies and header
     res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true, sameSite: 'Strict' });
+    res.setHeader('X-New-Access-Token', newAccessToken);
 
-    req.user = decoded; // Optionally update the req.user with refreshed user data
-    res.status(200).json({ accessToken: newAccessToken });
-    // next();
+    // Update req.user with refreshed user data
+    req.user = decoded;
+
+    // Continue to the actual endpoint
+    next();
   });
 }
 
