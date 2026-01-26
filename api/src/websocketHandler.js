@@ -2,6 +2,9 @@ const jwt = require("jsonwebtoken");
 const UserModel = require("./model/user");
 const MessageModel = require("./model/Message");
 const Redis = require("ioredis");
+const sanitizeHtml = require('sanitize-html');
+const { messageSchema } = require('./validation/schemas');
+const pubSubManager = require('./services/pubSubManager');
 
 let redis;
 let redisAvailable = true;
@@ -32,6 +35,40 @@ const RATE_LIMIT_MAX = 10; // max 10 messages per window
  * @param {WebSocketServer} wss - The WebSocket server instance.
  */
 async function setupWebSocket(wss) {
+  // Subscribe to Redis Pub/Sub channels for cross-worker communication
+  pubSubManager.subscribe('chat:message', (messageData) => {
+    // Broadcast message to local clients connected to this worker
+    [...wss.clients]
+      .filter(c => c.userId === messageData.recipient)
+      .forEach(c => {
+        try {
+          c.send(JSON.stringify({
+            text: messageData.text,
+            sender: messageData.sender,
+            recipient: messageData.recipient,
+            _id: messageData._id
+          }));
+        } catch (err) {
+          console.error("WebSocket send error (pub/sub):", err);
+        }
+      });
+  });
+
+  // Subscribe to online user updates
+  pubSubManager.subscribe('chat:online-users', (data) => {
+    // Broadcast online user updates to all local clients
+    [...wss.clients].forEach(client => {
+      try {
+        client.send(JSON.stringify(data));
+      } catch (err) {
+        console.error("WebSocket send error (online users):", err);
+      }
+    });
+  });
+
+  // Initialize Pub/Sub manager
+  pubSubManager.init();
+
   wss.on("connection", (connection, req) => {
     console.log("New WebSocket connection established");
     handleConnection(connection, req, wss);
@@ -44,8 +81,9 @@ async function setupWebSocket(wss) {
 
 function addOnlineUser(userId, userData) {
   if (redisAvailable && redis) {
+    // Use HSET to store user in a hash instead of individual keys
     return redis
-      .set(`user:${userId}`, JSON.stringify(userData))
+      .hset('online_users', userId, JSON.stringify(userData))
       .catch((err) => {
         console.error("Redis error setting user:", err);
         redisAvailable = false;
@@ -59,7 +97,8 @@ function addOnlineUser(userId, userData) {
 
 function removeOnlineUser(userId) {
   if (redisAvailable && redis) {
-    return redis.del(`user:${userId}`).catch((err) => {
+    // Use HDEL to remove user from hash
+    return redis.hdel('online_users', userId).catch((err) => {
       console.error("Redis error deleting user:", err);
       redisAvailable = false;
       inMemoryOnlineUsers.delete(userId);
@@ -140,6 +179,8 @@ function handleConnection(connection, req, wss) {
     clearTimeout(connection.deathTimer);
     if (connection.userId) {
       await removeOnlineUser(connection.userId);
+      // Clean up rate limiter to prevent memory leak
+      delete messageRateLimit[connection.userId];
     }
     notifyAboutOnlinePeople(wss);
   });
@@ -155,13 +196,13 @@ async function notifyAboutOnlinePeople(wss) {
   let onlinePeople;
   if (redisAvailable && redis) {
     try {
-      const keys = await redis.keys("user:*");
-      if (keys.length > 0) {
-        const users = await redis.mget(keys);
-        onlinePeople = keys.map((key, idx) => {
-          const userId = key.split(":")[1];
+      // Use HGETALL instead of KEYS for better performance (O(N) but non-blocking)
+      const usersHash = await redis.hgetall('online_users');
+
+      if (usersHash && Object.keys(usersHash).length > 0) {
+        onlinePeople = Object.entries(usersHash).map(([userId, userDataString]) => {
           try {
-            const data = JSON.parse(users[idx]);
+            const data = JSON.parse(userDataString);
             return {
               userId,
               username: data.username,
@@ -244,7 +285,7 @@ async function handleMessage(connection, message, wss, connection) {
     messageRateLimit[connection.userId].push(now);
   }
 
-  // Message validation
+  // Message validation and parsing
   let messData;
   try {
     messData = JSON.parse(message.toString());
@@ -256,16 +297,38 @@ async function handleMessage(connection, message, wss, connection) {
     }
     return;
   }
-  const { recipient, text } = messData;
-  if (!recipient || typeof text !== "string" || !text.trim()) {
+
+  // Validate message against schema
+  const { error, value } = messageSchema.validate(messData, {
+    stripUnknown: true,
+    convert: true
+  });
+
+  if (error) {
+    const errorMessage = error.details.map(d => d.message).join(', ');
     try {
-      connection.send(
-        JSON.stringify({
-          error: "Invalid message: recipient and text are required.",
-        })
-      );
+      connection.send(JSON.stringify({ error: `Validation failed: ${errorMessage}` }));
     } catch (sendErr) {
       console.error("WebSocket send error (validation):", sendErr);
+    }
+    return;
+  }
+
+  const { recipient, text } = value;
+
+  // Sanitize text content to prevent XSS attacks
+  const sanitizedText = sanitizeHtml(text, {
+    allowedTags: [], // No HTML tags allowed
+    allowedAttributes: {},
+    disallowedTagsMode: 'discard'
+  }).trim();
+
+  // Check if sanitized text is empty
+  if (!sanitizedText) {
+    try {
+      connection.send(JSON.stringify({ error: "Message content is empty after sanitization" }));
+    } catch (sendErr) {
+      console.error("WebSocket send error (empty content):", sendErr);
     }
     return;
   }
@@ -274,22 +337,29 @@ async function handleMessage(connection, message, wss, connection) {
     const messDoc = await MessageModel.create({
       sender: connection.userId,
       recipient,
-      text,
+      text: sanitizedText,
     });
+
+    // Publish message to Redis for cross-worker delivery
+    const messageData = {
+      text: sanitizedText,
+      sender: connection.userId,
+      recipient,
+      _id: messDoc._id
+    };
+
+    // Publish to Redis Pub/Sub (will be received by all workers)
+    await pubSubManager.publish('chat:message', messageData);
+
+    // Also send to local clients as fallback (in case Redis is down)
+    // This ensures messages work even if Pub/Sub fails
     [...wss.clients]
       .filter((c) => c.userId === recipient)
       .forEach((c) => {
         try {
-          c.send(
-            JSON.stringify({
-              text,
-              sender: connection.userId,
-              recipient,
-              _id: messDoc._id,
-            })
-          );
+          c.send(JSON.stringify(messageData));
         } catch (err) {
-          console.error("WebSocket send error (message):", err);
+          console.error("WebSocket send error (local fallback):", err);
         }
       });
   } catch (error) {

@@ -108,38 +108,45 @@ const getUserData = async (req, res) => {
     const { userId } = req.params;
     const ourUserId = req.user.userId;
 
-    // Fetch messages from MongoDB
-    const messages = await MessageModel.find({
+    // Pagination parameters (validated by middleware)
+    const limit = parseInt(req.query.limit) || 50;
+    const before = req.query.before ? new Date(req.query.before) : null;
+
+    // Build query
+    const query = {
       $or: [
         { sender: userId, recipient: ourUserId },
         { sender: ourUserId, recipient: userId },
       ],
-    }).sort({ createdAt: 1 });
+    };
 
-    // Return messages in response
-    res.status(200).json(messages);
+    // Add cursor-based pagination if 'before' timestamp provided
+    if (before) {
+      query.createdAt = { $lt: before };
+    }
+
+    // Fetch messages with pagination (most recent first, then reverse)
+    const messages = await MessageModel.find(query)
+      .sort({ createdAt: -1 }) // Get most recent first
+      .limit(limit)
+      .select('-__v') // Exclude version key
+      .lean(); // Return plain JavaScript objects for better performance
+
+    // Reverse to get chronological order (oldest to newest)
+    const chronologicalMessages = messages.reverse();
+
+    // Return messages with pagination metadata
+    res.status(200).json({
+      messages: chronologicalMessages,
+      hasMore: messages.length === limit,
+      cursor: messages.length > 0 ? messages[0].createdAt : null,
+      count: messages.length
+    });
   } catch (error) {
     console.error('Error in getUserData:', error.message);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
-
-function  getUserDataFromRequest(req) {
-  return new Promise((resolve, reject) => {
-    const authHeader = req.headers.authorization;
-    if (authHeader) {
-      const token = authHeader.split(' ')[1];
-      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(user);
-      });
-    } else {
-      reject(new Error('No Authorization header'));
-    }
-  });
-}
 
 module.exports = {
   userRegister,
