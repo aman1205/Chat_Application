@@ -5,7 +5,7 @@ This project is a real-time chat website built using the MERN (MongoDB, Express.
 
 ##Screenshot 
    <img width="1919" height="904" alt="image" src="https://github.com/user-attachments/assets/bfa087f3-7106-42aa-8108-17f845c6bb94" />
-   ![image](https://github.com/aman1205/Chat_Application/assets/113249368/f86a6407-38e3-40b3-a2e8-3333c9c85b98)
+   <img width="1919" height="909" alt="image" src="https://github.com/user-attachments/assets/b31edf12-a25a-42d3-bfb6-5d95650eb24a" />
 ## Features
 - Real-time chat with WebSocket
 - User authentication
