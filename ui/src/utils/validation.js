@@ -56,7 +56,7 @@ export const validatePassword = (password) => {
   const hasUppercase = /[A-Z]/.test(password);
   const hasLowercase = /[a-z]/.test(password);
   const hasNumber = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+  const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
 
   const criteriaMet = [hasUppercase, hasLowercase, hasNumber, hasSpecialChar].filter(Boolean).length;
 
@@ -202,7 +202,7 @@ export const calculatePasswordStrength = (password) => {
     score += 1;
     feedback.push('numbers');
   }
-  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
     score += 1;
     feedback.push('special characters');
   }
